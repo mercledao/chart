@@ -3,9 +3,10 @@ const arr = [];
 const xLabel = "totalVolume";
 const yLabel = "bridgeS";
 const xViewMn = 0;
-const xViewMx = 400;
+const xViewMx = 150000;
 const yViewMn = 0;
-const yViewMx = 200;
+const yViewMx = 200000;
+const matrixValues = {}; // Store matrix values separately for logging
 
 // just set outputFilePath
 fetch("./mrep/data/outputData3.json")
@@ -16,9 +17,10 @@ fetch("./mrep/data/outputData3.json")
   })
   .then(function (jsonData) {
     arr.push([xLabel, yLabel, { type: "string", role: "tooltip" }]);
-    jsonData.forEach((i) =>
-      arr.push([i.result[xLabel], i.result[yLabel], formatObject(i)])
-    );
+    jsonData.forEach((i, index) => {
+      arr.push([i.result[xLabel], i.result[yLabel], formatObject(i)]);
+      matrixValues[index] = JSON.parse(i.result.matrix); // Store matrix value separately
+    });
     drawChart();
   })
   .catch((err) => {
@@ -34,6 +36,7 @@ function formatObject(obj) {
       userValue = `user: ${obj[key]}`;
     } else if (typeof obj[key] === "object" && !Array.isArray(obj[key])) {
       for (const innerKey in obj[key]) {
+        if (innerKey === "matrix") continue;
         result += `${innerKey}: ${obj[key][innerKey]},\n`;
       }
     } else {
@@ -81,6 +84,8 @@ function drawChart() {
 function showTooltip(row) {
   const tooltip = data.getValue(row, 2);
   console.log(tooltip);
+  console.log(matrixValues[row]); // Log the matrix value
+
   const x = data.getValue(row, 0);
   const y = data.getValue(row, 1);
 

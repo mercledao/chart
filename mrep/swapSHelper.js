@@ -6,7 +6,7 @@ const {
   getDaysInBtw,
 } = require("./utils");
 
-const arrFS = [];
+let arrFS = [];
 
 const getFS = (D) => {
   const weightD = -0.1;
@@ -41,6 +41,7 @@ const getSwapTxScore = (x, D, T, res) => {
 };
 
 const swapS = (txns) => {
+  arrFS = [];
   const output = [];
   const res = {
     totalVolume: 0,

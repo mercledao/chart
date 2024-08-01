@@ -61,7 +61,7 @@ const writeOutput = (output) => {
 };
 
 const getVolWeight = (amount_usd) => {
-  let volWeight = Math.log10(amount_usd + 1);
+  let volWeight = amount_usd;
   volWeight = parseFloat(volWeight.toFixed(9));
   return volWeight;
 };

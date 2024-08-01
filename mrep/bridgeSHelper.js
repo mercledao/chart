@@ -67,6 +67,7 @@ const bridgeS = (txns) => {
   res.bridgeS = output.reduce((accu, curr) => (accu += curr), parseFloat(0));
   res.totalTx = txns.length;
   res.averageVol = res.totalVolume / parseFloat(res.totalTx);
+  res.matrix = matrix;
   return res;
 };
 

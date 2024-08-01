@@ -61,7 +61,7 @@ const writeOutput = (output) => {
 };
 
 const getVolWeight = (amount_usd) => {
-  let volWeight = amount_usd;
+  let volWeight = amount_usd / 10;
   volWeight = parseFloat(volWeight.toFixed(9));
   return volWeight;
 };
@@ -71,10 +71,18 @@ const getDaysInBtw = (startDate, endDate) => {
   return Math.floor(diffInMs / (24 * 60 * 60 * 1000));
 };
 
+const sigmoid = (x) => {
+  const c1 = 0.0005;
+  const c2 = 5283.383109902085;
+  const val = 10000 / (1 + Math.exp(-1 * c1 * (x - c2)));
+  return val - 665;
+}
+
 module.exports = {
   formulas,
   getInputData,
   getVolWeight,
   writeOutput,
   getDaysInBtw,
+  sigmoid
 };

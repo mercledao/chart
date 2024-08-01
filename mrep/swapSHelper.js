@@ -4,6 +4,7 @@ const {
   getVolWeight,
   writeOutput,
   getDaysInBtw,
+  sigmoid,
 } = require("./utils");
 
 let arrFS = [];
@@ -72,6 +73,7 @@ const swapS = (txns) => {
   res.swapS = output.reduce((accu, curr) => (accu += curr), parseFloat(0));
   res.totalTx = txns.length;
   res.averageVol = res.totalVolume / parseFloat(res.totalTx);
+  res.sigmoidSwapS = sigmoid(res.swapS);
   return res;
 };
 
@@ -79,16 +81,34 @@ const getSwapForAllUsers = async () => {
   try {
     const users = await getInputData();
     const output = [];
+    let mean = parseFloat(0);
 
     // calculate
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
       const swapScore = swapS(users[fromAddr]);
-      output.push({
-        user: fromAddr,
-        result: swapScore,
-      });
+
+      if (swapScore.swapS > 0 && swapScore.swapS < 100000) {
+        output.push({
+          user: fromAddr,
+          result: swapScore,
+        });
+        mean += swapScore.swapS;
+      }
     });
+
+    mean = mean / parseFloat(output.length);
+    console.log("mean = ", mean);
+    let dev = 0;
+
+    output.forEach((i) => {
+      const tmp = Math.abs(parseFloat(i.result.swapS) - mean);
+      dev += tmp;
+      i.result.meanDeviation = tmp;
+    });
+
+    dev = parseFloat(dev) / parseFloat(output.length);
+    console.log("meanDeviation = ", dev);
 
     await writeOutput(output);
     console.log("Swap scores calculated successfully.");

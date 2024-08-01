@@ -1,11 +1,11 @@
 // Note: Make sure correct output file path is selected & xLabel & yLabel name should be exactly same as the JSON property you want.
 const arr = [];
 const xLabel = "totalVolume";
-const yLabel = "bridgeS";
-const xViewMn = 0;
-const xViewMx = 150000;
-const yViewMn = 0;
-const yViewMx = 200000;
+const yLabel = "sigmoidSwapS";
+const xViewMn = 52000;
+const xViewMx = 53000;
+const yViewMn = 4100;
+const yViewMx = 4500;
 const matrixValues = {}; // Store matrix values separately for logging
 
 // just set outputFilePath
@@ -19,7 +19,11 @@ fetch("./mrep/data/outputData3.json")
     arr.push([xLabel, yLabel, { type: "string", role: "tooltip" }]);
     jsonData.forEach((i, index) => {
       arr.push([i.result[xLabel], i.result[yLabel], formatObject(i)]);
-      matrixValues[index] = JSON.parse(i.result.matrix); // Store matrix value separately
+
+      // default user Info
+      if (i.user.startsWith("0x0f9a85")) console.log("userInfo = ", i);
+
+      if (i.result.matrix) matrixValues[index] = JSON.parse(i.result.matrix); // Store matrix value separately
     });
     drawChart();
   })
@@ -98,6 +102,7 @@ function showTooltip(row) {
   tooltipDiv.style.border = "1px solid black";
   tooltipDiv.style.padding = "5px";
   tooltipDiv.style.pointerEvents = "none"; // Ensure tooltips don't interfere with clicks
+  tooltipDiv.style.opacity = ".75";
 
   // Position the tooltip
   const chartArea = container

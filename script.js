@@ -8,7 +8,7 @@ const yViewMn = 0;
 const yViewMx = 50;
 
 // just set outputFilePath
-fetch("./data/_swapOutput3.json")
+fetch("./data/_swapOutput2.json")
   .then(function (response) {
     if (response.status == 200) {
       return response.json();
@@ -60,6 +60,7 @@ function drawChart() {
     vAxis: { title: yLabel, viewWindow: { max: yViewMx, min: yViewMn } },
     crosshair: { trigger: "both" },
     legend: "none",
+    tooltip: { trigger: 'selection' }
   };
 
   var chart = new google.visualization.ScatterChart(

@@ -60,7 +60,7 @@ function drawChart() {
     vAxis: { title: yLabel, viewWindow: { max: yViewMx, min: yViewMn } },
     crosshair: { trigger: "both" },
     legend: "none",
-    tooltip: { trigger: 'selection' }
+    tooltip: { trigger: "selection" },
   };
 
   var chart = new google.visualization.ScatterChart(

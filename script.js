@@ -8,7 +8,7 @@ const yViewMn = 0;
 const yViewMx = 50;
 
 // just set outputFilePath
-fetch("./data/_swapOutput2.json")
+fetch("./mrep/data/outputData3.json")
   .then(function (response) {
     if (response.status == 200) {
       return response.json();

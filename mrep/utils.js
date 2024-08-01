@@ -1,7 +1,7 @@
 const fs = require('fs');
 const csv = require('csv-parser');
 const path = require('path');
-const fileNo = 1;
+const fileNo = 3;
 
 const formulas = {
     swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.007 * fP + 0.003 * tD),
@@ -44,7 +44,7 @@ const writeOutput = (output) => {
         const jsonString = JSON.stringify(output, null, 2);
 
         fs.writeFile(
-            path.join(__dirname, 'data', `outputData${fileNo}.json`),
+            path.join(__dirname, 'data', `outputData3.json`),
             jsonString,
             (err) => {
                 if (err) {

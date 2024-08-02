@@ -73,7 +73,6 @@ const swapS = (txns) => {
   res.swapS = output.reduce((accu, curr) => (accu += curr), parseFloat(0));
   res.totalTx = txns.length;
   res.averageVol = res.totalVolume / parseFloat(res.totalTx);
-  res.sigmoidSwapS = sigmoid(res.swapS);
   return res;
 };
 
@@ -88,6 +87,7 @@ const getSwapForAllUsers = async () => {
     userAddr.forEach((fromAddr) => {
       const swapScore = swapS(users[fromAddr]);
 
+      // soup only 100k & below r included
       if (swapScore.swapS > 0 && swapScore.swapS < 100000) {
         output.push({
           user: fromAddr,
@@ -99,16 +99,17 @@ const getSwapForAllUsers = async () => {
 
     mean = mean / parseFloat(output.length);
     console.log("mean = ", mean);
-    let dev = 0;
+    let meanDev = 0;
 
     output.forEach((i) => {
-      const tmp = Math.abs(parseFloat(i.result.swapS) - mean);
-      dev += tmp;
-      i.result.meanDeviation = tmp;
+      const dev = Math.abs(i.result.swapS - mean);
+      meanDev += dev;
+      i.result.meanDeviation = dev;
+      i.result.sigmoidSwapS = sigmoid(i.result.swapS, mean);
     });
 
-    dev = parseFloat(dev) / parseFloat(output.length);
-    console.log("meanDeviation = ", dev);
+    meanDev = meanDev / parseFloat(output.length);
+    console.log("meanDeviation = ", meanDev);
 
     await writeOutput(output);
     console.log("Swap scores calculated successfully.");

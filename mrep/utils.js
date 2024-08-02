@@ -4,7 +4,7 @@ const path = require("path");
 const fileNo = 3;
 
 const formulas = {
-  swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.007 * fP + 0.003 * tD),
+  swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.001 * fP + 0.009 * tD),
   bridgeTxScore: (volWeight, crossChainScore) =>
     volWeight * (1 + crossChainScore),
   crossChainScore: (angleInRadians) => 0.5 * Math.sin(angleInRadians) + 1,
@@ -71,11 +71,11 @@ const getDaysInBtw = (startDate, endDate) => {
   return Math.floor(diffInMs / (24 * 60 * 60 * 1000));
 };
 
-const sigmoid = (x) => {
+const sigmoid = (x, mean) => {
   const c1 = 0.0005;
-  const c2 = 5283.383109902085;
+  const c2 = mean;
   const val = 10000 / (1 + Math.exp(-1 * c1 * (x - c2)));
-  return val - 665;
+  return val;
 }
 
 module.exports = {

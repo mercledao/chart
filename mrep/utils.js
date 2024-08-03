@@ -1,6 +1,7 @@
 const fs = require("fs");
 const csv = require("csv-parser");
 const path = require("path");
+const { Parser } = require("json2csv");
 const fileNo = 3;
 
 const formulas = {
@@ -76,6 +77,21 @@ const sigmoid = (x, mean) => {
   const c2 = mean;
   const val = 10000 / (1 + Math.exp(-1 * c1 * (x - c2)));
   return val;
+};
+
+function writeToCsv(arr) {
+  return new Promise((resolve, reject) => {
+    const parser = new Parser();
+    const csv = parser.parse(arr);
+
+    fs.writeFile(path.join(__dirname, "data", "output.csv"), csv, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve("CSV file successfully written");
+      }
+    });
+  });
 }
 
 module.exports = {
@@ -84,5 +100,6 @@ module.exports = {
   getVolWeight,
   writeOutput,
   getDaysInBtw,
-  sigmoid
+  sigmoid,
+  writeToCsv,
 };

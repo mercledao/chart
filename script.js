@@ -1,7 +1,7 @@
 // Note: Make sure correct output file path is selected & xLabel & yLabel name should be exactly same as the JSON property you want.
 const arr = [];
 const xLabel = "totalVolume";
-const yLabel = "bridgeS";
+const yLabel = "sigmoidSwapS";
 const xViewMn = 0;
 const xViewMx = 100000;
 const yViewMn = 0;

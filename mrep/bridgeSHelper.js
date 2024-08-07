@@ -4,6 +4,7 @@ const {
   writeOutput,
   getVolWeight,
   getDaysInBtw,
+  sigmoid
 } = require("./utils");
 
 let matrix = {};
@@ -75,16 +76,36 @@ const getBridgeForAllUsers = async () => {
   try {
     const users = await getInputData();
     const output = [];
+    let mean = parseFloat(0);
 
     // calculate
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
       const bridgeScore = bridgeS(users[fromAddr]);
-      output.push({
-        user: fromAddr,
-        result: bridgeScore,
-      });
+      
+      // soup only 100k & below r included
+      if (bridgeScore.bridgeS > 0 && bridgeScore.bridgeS < 100000) {
+        output.push({
+          user: fromAddr,
+          result: bridgeScore,
+        });
+        mean += bridgeScore.bridgeS;
+      }
     });
+
+    mean = mean / parseFloat(output.length);
+    console.log("mean = ", mean);
+    let meanDev = 0;
+
+    output.forEach((i) => {
+      const dev = Math.abs(i.result.bridgeS - mean);
+      meanDev += dev;
+      i.result.meanDeviation = dev;
+      i.result.sigmoidBridgeS = sigmoid(i.result.bridgeS, mean);
+    });
+
+    meanDev = meanDev / parseFloat(output.length);
+    console.log("meanDeviation = ", meanDev);
 
     await writeOutput(output);
     console.log("Bridge scores calculated successfully.");

@@ -2,11 +2,12 @@ const {
   formulas,
   getInputData,
   writeOutput,
-  getDuration,
   getArrMedian,
   getUniqueContracts,
-  getUnixTimeInSec,
   contracts,
+  txnsPerDay,
+  getMxTxnsPerDay,
+  getAgeInDays,
 } = require("./utils");
 
 const getMedianFreq = (users, D) => {
@@ -15,7 +16,7 @@ const getMedianFreq = (users, D) => {
 
   userAddr.forEach((fromAddr) => {
     const txnCnt = users[fromAddr].length;
-    userFreq.push(parseFloat(D) / parseFloat(txnCnt));
+    userFreq.push(txnsPerDay(txnCnt, D));
   });
 
   return getArrMedian(userFreq);
@@ -26,7 +27,7 @@ const getMedianAge = (users) => {
   const userAges = [];
 
   userAddr.forEach((fromAddr) => {
-    userAges.push(getUnixTimeInSec(users[fromAddr][0].block_date));
+    userAges.push(getAgeInDays(users[fromAddr][0].block_date));
   });
 
   return getArrMedian(userAges);
@@ -45,7 +46,7 @@ const getFavContract = (txns) => {
   return maxFrequency;
 };
 
-const stickyS = (txns, medianAge, medianFreq, D) => {
+const stickyS = (txns, medianAge, medianFreq, D, mxTxnsPerDay) => {
   const Wfreq = 25;
   const Wexploration = 25;
   const Wfav = 25;
@@ -53,11 +54,11 @@ const stickyS = (txns, medianAge, medianFreq, D) => {
   const totalContracts = contracts.length;
   const uniqueContracts = getUniqueContracts(txns);
   const favTxnCnt = getFavContract(txns);
-  const userAge = getUnixTimeInSec(txns[0].block_date);
+  const userAge = getAgeInDays(txns[0].block_date);
 
   const res = {
     totalTx: txns.length,
-    freqScore: formulas.freqScore(Wfreq, D, txns.length),
+    freqScore: formulas.freqScore(Wfreq, D, txns.length, medianFreq, mxTxnsPerDay),
     explorationScore: formulas.explorationScore(
       Wexploration,
       uniqueContracts,
@@ -65,6 +66,9 @@ const stickyS = (txns, medianAge, medianFreq, D) => {
     ),
     favScore: formulas.favScore(Wfav, favTxnCnt, txns.length),
     ageScore: formulas.ageScore(Wage, userAge, medianAge),
+    userAge,
+    favTxnCnt,
+    uniqueContracts,
   };
 
   res.stickyScore =
@@ -77,12 +81,15 @@ const getStickySForAllUsers = async () => {
     const users = await getInputData();
     const output = [];
     const medianAge = getMedianAge(users);
-    const D = getDuration();
+    const D = 7;
     const medianFreq = getMedianFreq(users, D);
+    const mxTxnsPerDay = getMxTxnsPerDay(users, D);
+
+    console.log(` medianAge: ${medianAge}\n medianFreq: ${medianFreq}`);
 
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
-      const stickyObj = stickyS(users[fromAddr], medianAge, medianFreq, D);
+      const stickyObj = stickyS(users[fromAddr], medianAge, medianFreq, D, mxTxnsPerDay);
 
       output.push({
         user: fromAddr,

@@ -2,10 +2,10 @@
 const arr = [];
 const xLabel = "totalTx";
 const yLabel = "stickyScore";
-const xViewMn = 40;
+const xViewMn = 35;
 const xViewMx = 100;
-const yViewMn = 83;
-const yViewMx = 130;
+const yViewMn = 51;
+const yViewMx = 59;
 const matrixValues = {}; // Store matrix values separately for logging
 
 // just set outputFilePath

@@ -9,8 +9,9 @@ const formulas = {
   bridgeTxScore: (volWeight, crossChainScore) =>
     volWeight * (1 + crossChainScore),
   crossChainScore: (angleInRadians) => 0.5 * Math.sin(angleInRadians) + 1,
-  freqScore: (Wfreq, D, txnCnt) =>
-    parseFloat(Wfreq) * (parseFloat(D) / parseFloat(txnCnt)),
+  freqScore: (Wfreq, D, txnCnt, medianFreq, mxTxnsPerDay) =>
+    parseFloat(Wfreq) *
+    (txnsPerDay(txnCnt, D) / (mxTxnsPerDay * parseFloat(medianFreq))),
   explorationScore: (Wexploration, uniqContracts, totalContracts) =>
     parseFloat(Wexploration) *
     (parseFloat(uniqContracts) / parseFloat(totalContracts)),
@@ -122,9 +123,12 @@ const getUniqueContracts = (txns) => {
   return uniqueContracts.size;
 };
 
-const getUnixTimeInSec = (dateString) => {
+const getAgeInDays = (dateString) => {
   const dateObject = new Date(dateString);
-  return Math.floor(dateObject.getTime() / 1000);
+  const currTime = Math.floor(dateObject.getTime() / 1000);
+  const endTime = 1699747200; // StartDate + 120 Days
+  const ageInDays = (endTime - currTime) / (24 * 60 * 60);
+  return ageInDays;
 };
 
 const contracts = [
@@ -140,6 +144,22 @@ const contracts = [
   "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
 ];
 
+const txnsPerDay = (txnCnt, D) => {
+  return parseFloat(txnCnt) / parseFloat(D);
+};
+
+const getMxTxnsPerDay = (users, D) => {
+  let mx = 0;
+
+  const userAddr = Object.keys(users);
+  userAddr.forEach((fromAddr) => {
+    const txnCnt = users[fromAddr].length;
+    mx = Math.max(mx, txnsPerDay(txnCnt, D));
+  });
+
+  return mx;
+};
+
 module.exports = {
   formulas,
   getInputData,
@@ -151,6 +171,8 @@ module.exports = {
   getDuration,
   getArrMedian,
   getUniqueContracts,
-  getUnixTimeInSec,
+  getAgeInDays,
   contracts,
+  txnsPerDay,
+  getMxTxnsPerDay,
 };

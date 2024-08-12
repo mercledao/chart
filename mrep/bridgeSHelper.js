@@ -15,7 +15,7 @@ const getAngleInRadians = (src, dest) => {
   // scaling
   const mn = Math.min(...srcArr);
   const mx = Math.max(...srcArr);
-  const delta = Math.max(mx - mn, 1); // soup denom can be 0!
+  const delta = Math.max(mx - mn, 1);
 
   // combined scaled(x) + ( PI / 2 )
   const angle =
@@ -32,9 +32,9 @@ const getBridgeTxScore = (x, src, dest) => {
   return parseFloat(res.toFixed(9));
 };
 
-const bridgeS = (txns) => {
+const getBridgeS = (txns) => {
   matrix = {};
-  const output = [];
+  const bridgeTxScores = [];
   const res = {
     totalVolume: 0,
     firstLastDays: getDaysInBtw(
@@ -53,19 +53,19 @@ const bridgeS = (txns) => {
     const x = parseFloat(txns[i].amount_usd || 0);
     res.totalVolume += x;
 
-    // soup use actual chainId's
+    // todo use actual chainId's
     const src = txns[i].token_bought_symbol;
     const dest = txns[i].token_sold_symbol;
 
     if (!matrix[src]) matrix[src] = {};
     if (!matrix[src][dest]) matrix[src][dest] = 0;
 
-    output.push(getBridgeTxScore(x, src, dest));
+    bridgeTxScores.push(getBridgeTxScore(x, src, dest));
 
     matrix[src][dest]++;
   }
 
-  res.bridgeS = output.reduce((accu, curr) => (accu += curr), parseFloat(0));
+  res.bridgeScoreRaw = bridgeTxScores.reduce((accu, curr) => (accu += curr), 0);
   res.totalTx = txns.length;
   res.averageVol = res.totalVolume / parseFloat(res.totalTx);
   res.matrix = JSON.stringify(matrix);
@@ -76,20 +76,20 @@ const getBridgeForAllUsers = async () => {
   try {
     const users = await getInputData();
     const output = [];
-    let mean = parseFloat(0);
+    let mean = 0;
 
     // calculate
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
-      const bridgeScore = bridgeS(users[fromAddr]);
+      const res = getBridgeS(users[fromAddr]);
       
-      // soup only 100k & below r included
-      if (bridgeScore.bridgeS > 0 && bridgeScore.bridgeS < 100000) {
+      // todo only 100k & below r included
+      if (res.bridgeScoreRaw > 0 && res.bridgeScoreRaw < 100000) {
         output.push({
           user: fromAddr,
-          result: bridgeScore,
+          result: res,
         });
-        mean += bridgeScore.bridgeS;
+        mean += res.bridgeScoreRaw;
       }
     });
 
@@ -98,10 +98,10 @@ const getBridgeForAllUsers = async () => {
     let meanDev = 0;
 
     output.forEach((i) => {
-      const dev = Math.abs(i.result.bridgeS - mean);
+      const dev = Math.abs(i.result.bridgeScoreRaw - mean);
       meanDev += dev;
       i.result.meanDeviation = dev;
-      i.result.sigmoidBridgeS = sigmoid(i.result.bridgeS, mean);
+      i.result.bridgeS = sigmoid(i.result.bridgeScoreRaw, mean);
     });
 
     meanDev = meanDev / parseFloat(output.length);

@@ -31,19 +31,15 @@ const getSwapTxScore = (x, D, T, res) => {
   const volWeight = getVolWeight(x);
   const fP = getFP(D);
 
-  let tD = 20 * Math.log10(T);
-  tD = parseFloat(tD.toFixed(9));
-
-  res.diversityS = tD;
   res.freqPower = fP;
 
-  const score = formulas.swapTxScore(volWeight, fP, tD);
+  const score = formulas.swapTxScore(volWeight, fP);
   return parseFloat(score.toFixed(9));
 };
 
-const swapS = (txns) => {
+const getSwapS = (txns) => {
   arrFS = [];
-  const output = [];
+  const swapTxScores = [];
   const res = {
     totalVolume: 0,
     firstLastDays: getDaysInBtw(
@@ -67,10 +63,10 @@ const swapS = (txns) => {
 
     const T = uniqueTokens.size;
 
-    output.push(getSwapTxScore(x, D, T, res));
+    swapTxScores.push(getSwapTxScore(x, D, T, res));
   }
 
-  res.swapS = output.reduce((accu, curr) => (accu += curr), parseFloat(0));
+  res.swapScoreRaw = swapTxScores.reduce((accu, curr) => (accu += curr), 0);
   res.totalTx = txns.length;
   res.averageVol = res.totalVolume / parseFloat(res.totalTx);
   return res;
@@ -80,20 +76,20 @@ const getSwapForAllUsers = async () => {
   try {
     const users = await getInputData();
     const output = [];
-    let mean = parseFloat(0);
+    let mean = 0;
 
     // calculate
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
-      const swapScore = swapS(users[fromAddr]);
+      const res = getSwapS(users[fromAddr]);
 
-      // soup only 100k & below r included
-      if (swapScore.swapS > 0 && swapScore.swapS < 100000) {
+      // todo cap only 100k & below r included
+      if (res.swapScoreRaw > 0 && res.swapScoreRaw < 100000) {
         output.push({
           user: fromAddr,
-          result: swapScore,
+          result: res,
         });
-        mean += swapScore.swapS;
+        mean += res.swapScoreRaw;
       }
     });
 
@@ -102,10 +98,10 @@ const getSwapForAllUsers = async () => {
     let meanDev = 0;
 
     output.forEach((i) => {
-      const dev = Math.abs(i.result.swapS - mean);
+      const dev = Math.abs(i.result.swapScoreRaw - mean);
       meanDev += dev;
       i.result.meanDeviation = dev;
-      i.result.sigmoidSwapS = sigmoid(i.result.swapS, mean);
+      i.result.swapS = sigmoid(i.result.swapScoreRaw, mean);
     });
 
     meanDev = meanDev / parseFloat(output.length);

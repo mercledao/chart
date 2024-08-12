@@ -1,9 +1,9 @@
 // Note: Make sure correct output file path is selected & xLabel & yLabel name should be exactly same as the JSON property you want.
 const arr = [];
 const xLabel = "totalVolume";
-const yLabel = "sigmoidBridgeS";
+const yLabel = "swapS";
 const xViewMn = 0;
-const xViewMx = 100000;
+const xViewMx = 1000000;
 const yViewMn = 0;
 const yViewMx = 10000;
 const matrixValues = {}; // Store matrix values separately for logging

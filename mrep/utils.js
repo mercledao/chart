@@ -6,7 +6,7 @@ const fileNo = 2;
 const lastDateRange = 1721327400;
 
 const formulas = {
-  swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.009 * fP),
+  swapTxScore: (volWeight, fP) => volWeight * (1 + 0.009 * fP),
   bridgeTxScore: (volWeight, crossChainScore) =>
     volWeight * (1 + crossChainScore),
   crossChainScore: (angleInRadians) => 0.5 * Math.sin(angleInRadians) + 1,

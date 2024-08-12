@@ -1,5 +1,4 @@
-const { dateMillis } = require('../../constants');
-const { formulas, getInputData, getVolWeight, writeOutput, getDaysInBtw } = require('./utils');
+const { formulas, getInputData, writeOutput, getDaysInBtw, parseDate } = require('./utils');
 const ETH_PRICE = 3500;
 
 const getResult = (txns, maxDate) => {
@@ -48,13 +47,13 @@ const getResult = (txns, maxDate) => {
                 continue;
             }
             const volWeight = (balanceMap.get(token) * ETH_PRICE || 0) / 10;
-            const platformDiversity = 2 * (1 - Math.pow(0.04 * keys.length + 1, -2));
+            const platformDiversity = formulas.platformDiversity(keys.length);
 
-            score += volWeight * (1 + platformDiversity);
+            score += formulas.tokenActiveScore(volWeight, platformDiversity);
             currTd = platformDiversity;
         }
 
-        curr = new Date(+curr + dateMillis.day_1);
+        curr = new Date(+curr + (24 * 60 * 60 * 1000));
         currDateString = parseDate(curr);
     } while (+curr <= +end);
 
@@ -68,10 +67,6 @@ const getResult = (txns, maxDate) => {
         balance: activeBalance,
         stakingS: score,
     };
-};
-
-const parseDate = (date) => {
-    return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
 };
 
 const getStakeScoreForUser = async () => {
@@ -99,7 +94,8 @@ const getStakeScoreForUser = async () => {
             });
         });
 
-        writeOutput(output);
+        await writeOutput(output);
+        console.log("Staking scores calculated successfully.");
     } catch (err) {
         console.error('Err getting staking score.', err);
     }

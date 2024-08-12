@@ -19,6 +19,9 @@ const formulas = {
     parseFloat(Wfav) * (parseFloat(favTxnCnt) / parseFloat(totalTxn)),
   ageScore: (Wage, userAge, medianAge) =>
     parseFloat(Wage) * (parseFloat(userAge) / parseFloat(medianAge)),
+  platformDiversity: (p) => 2 * (1 - Math.pow(0.04 * p + 1, -2)),
+  tokenActiveScore: (volWeight, platformDiversity) =>
+    volWeight * (1 + platformDiversity),
 };
 
 const getInputData = () => {
@@ -28,7 +31,7 @@ const getInputData = () => {
     fs.createReadStream(path.join(__dirname, "data", `data2.csv`))
       .pipe(csv())
       .on("data", (data) => {
-        if (data.tx_to?.startsWith("0x")) {
+        if (data.tx_to?.startsWith("0x") || data.tx_from?.startsWith("0x")) {
           data.block_date = new Date(data.block_date);
 
           // group all txns by user ( tx_from )
@@ -183,6 +186,10 @@ const getRangeTxnsForUsers = (users, D) => {
   return newUsers;
 };
 
+const parseDate = (date) => {
+  return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
+};
+
 module.exports = {
   formulas,
   getInputData,
@@ -199,4 +206,5 @@ module.exports = {
   getMxTxnsPerDay,
   getUnixTimeInSec,
   getRangeTxnsForUsers,
+  parseDate,
 };

@@ -3,15 +3,15 @@ const csv = require("csv-parser");
 const path = require("path");
 const { Parser } = require("json2csv");
 const fileNo = 2;
+const lastDateRange = 1721327400;
 
 const formulas = {
-  swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.001 * fP + 0.009 * tD),
+  swapTxScore: (volWeight, fP, tD) => volWeight * (1 + 0.009 * fP),
   bridgeTxScore: (volWeight, crossChainScore) =>
     volWeight * (1 + crossChainScore),
   crossChainScore: (angleInRadians) => 0.5 * Math.sin(angleInRadians) + 1,
   freqScore: (Wfreq, D, txnCnt, medianFreq, mxTxnsPerDay) =>
-    parseFloat(Wfreq) *
-    (txnsPerDay(txnCnt, D) / (mxTxnsPerDay * parseFloat(medianFreq))),
+    parseFloat(Wfreq) * (txnsPerDay(txnCnt, D) / medianFreq),
   explorationScore: (Wexploration, uniqContracts, totalContracts) =>
     parseFloat(Wexploration) *
     (parseFloat(uniqContracts) / parseFloat(totalContracts)),
@@ -25,7 +25,7 @@ const getInputData = () => {
   return new Promise((resolve, reject) => {
     const users = {};
 
-    fs.createReadStream(path.join(__dirname, "data", `output2.csv`))
+    fs.createReadStream(path.join(__dirname, "data", `data2.csv`))
       .pipe(csv())
       .on("data", (data) => {
         if (data.tx_to?.startsWith("0x")) {
@@ -72,7 +72,7 @@ const writeOutput = (output) => {
 };
 
 const getVolWeight = (amount_usd) => {
-  let volWeight = amount_usd / 10;
+  let volWeight = amount_usd / 100;
   volWeight = parseFloat(volWeight.toFixed(9));
   return volWeight;
 };
@@ -85,7 +85,9 @@ const getDaysInBtw = (startDate, endDate) => {
 const sigmoid = (x, mean) => {
   const c1 = 0.0005;
   const c2 = mean;
-  const val = 10000 / (1 + Math.exp(-1 * c1 * (x - c2)));
+  const val =
+    10000 / (1 + Math.exp(-1 * c1 * (x - c2))) -
+    10000 / (1 + Math.exp(c1 * c2));
   return val;
 };
 
@@ -104,11 +106,6 @@ function writeToCsv(arr) {
   });
 }
 
-const getDuration = () => {
-  const D = 120;
-  return D;
-};
-
 const getArrMedian = (arr) => {
   arr.sort((a, b) => a - b);
   const mid = Math.floor(arr.length / 2);
@@ -123,11 +120,16 @@ const getUniqueContracts = (txns) => {
   return uniqueContracts.size;
 };
 
-const getAgeInDays = (dateString) => {
+const getUnixTimeInSec = (dateString) => {
   const dateObject = new Date(dateString);
-  const currTime = Math.floor(dateObject.getTime() / 1000);
-  const endTime = 1699747200; // StartDate + 120 Days
-  const ageInDays = (endTime - currTime) / (24 * 60 * 60);
+  return Math.floor(dateObject.getTime() / 1000);
+};
+
+const getAgeInDays = (dateString) => {
+  const startTime = 1689379200; // 15th July 2023
+  const currTime = getUnixTimeInSec(dateString);
+
+  const ageInDays = (currTime - startTime) / (24 * 60 * 60);
   return ageInDays;
 };
 
@@ -160,6 +162,27 @@ const getMxTxnsPerDay = (users, D) => {
   return mx;
 };
 
+const isInTimeRange = (dateString, D) => {
+  const time = getUnixTimeInSec(dateString);
+  const startDateRange = lastDateRange - D * 24 * 60 * 60;
+  return startDateRange <= time && time <= lastDateRange;
+};
+
+const getRangeTxnsForUsers = (users, D) => {
+  const newUsers = {};
+
+  const userAddr = Object.keys(users);
+  userAddr.forEach((fromAddr) => {
+    const arr = users[fromAddr].filter((txn) =>
+      isInTimeRange(txn.block_date, D)
+    );
+
+    if (arr.length) newUsers[fromAddr] = arr;
+  });
+
+  return newUsers;
+};
+
 module.exports = {
   formulas,
   getInputData,
@@ -168,11 +191,12 @@ module.exports = {
   getDaysInBtw,
   sigmoid,
   writeToCsv,
-  getDuration,
   getArrMedian,
   getUniqueContracts,
   getAgeInDays,
   contracts,
   txnsPerDay,
   getMxTxnsPerDay,
+  getUnixTimeInSec,
+  getRangeTxnsForUsers,
 };

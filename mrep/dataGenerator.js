@@ -1,4 +1,4 @@
-const { getInputData, writeToCsv, getDuration, contracts } = require("./utils");
+const { getInputData, writeToCsv, contracts, getUnixTimeInSec } = require("./utils");
 
 const getRandomStr = (length) => {
   let result = "";
@@ -29,41 +29,15 @@ const generate = async () => {
   }
 };
 
-function getRandomDate(startDate, maxDays) {
-  // Convert start date to timestamp
-  const startTimestamp = startDate.getTime();
-
-  // Calculate the maximum timestamp within the range
-  const endTimestamp = startTimestamp + maxDays * 24 * 60 * 60 * 1000;
-
-  // Generate a random timestamp between the start and end timestamps
-  const randomTimestamp =
-    startTimestamp + Math.random() * (endTimestamp - startTimestamp);
-
-  // Convert the random timestamp back to a Date object
-  const randomDate = new Date(randomTimestamp);
-
-  // Format the date as YYYY-MM-DD
-  const year = randomDate.getFullYear();
-  const month = String(randomDate.getMonth() + 1).padStart(2, "0");
-  const day = String(randomDate.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 const stickyGenerator = async () => {
   try {
     const users = await getInputData();
     const output = [];
-    const startDate = new Date("2023-07-15");
-    const maxDays = getDuration();
 
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
-      users[fromAddr].forEach((txn, index) => {
-        txn.tx_from = Math.floor(Math.random() * 3000) + 1;
+      users[fromAddr].forEach((txn) => {
         txn.tx_to = contracts[Math.floor(Math.random() * 10)];
-        txn.block_date = getRandomDate(startDate, maxDays);
         output.push(txn);
       });
     });

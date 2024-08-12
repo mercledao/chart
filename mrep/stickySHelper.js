@@ -8,6 +8,7 @@ const {
   txnsPerDay,
   getMxTxnsPerDay,
   getAgeInDays,
+  getRangeTxnsForUsers
 } = require("./utils");
 
 const getMedianFreq = (users, D) => {
@@ -16,9 +17,10 @@ const getMedianFreq = (users, D) => {
 
   userAddr.forEach((fromAddr) => {
     const txnCnt = users[fromAddr].length;
-    userFreq.push(txnsPerDay(txnCnt, D));
+    userFreq.push(txnCnt);
   });
 
+  console.log(JSON.stringify(userFreq))
   return getArrMedian(userFreq);
 };
 
@@ -47,10 +49,10 @@ const getFavContract = (txns) => {
 };
 
 const stickyS = (txns, medianAge, medianFreq, D, mxTxnsPerDay) => {
-  const Wfreq = 25;
-  const Wexploration = 25;
-  const Wfav = 25;
-  const Wage = 25;
+  const Wfreq = 70;
+  const Wexploration = 10;
+  const Wfav = 10;
+  const Wage = 10;
   const totalContracts = contracts.length;
   const uniqueContracts = getUniqueContracts(txns);
   const favTxnCnt = getFavContract(txns);
@@ -58,7 +60,13 @@ const stickyS = (txns, medianAge, medianFreq, D, mxTxnsPerDay) => {
 
   const res = {
     totalTx: txns.length,
-    freqScore: formulas.freqScore(Wfreq, D, txns.length, medianFreq, mxTxnsPerDay),
+    freqScore: formulas.freqScore(
+      Wfreq,
+      D,
+      txns.length,
+      medianFreq,
+      mxTxnsPerDay
+    ),
     explorationScore: formulas.explorationScore(
       Wexploration,
       uniqueContracts,
@@ -78,25 +86,38 @@ const stickyS = (txns, medianAge, medianFreq, D, mxTxnsPerDay) => {
 
 const getStickySForAllUsers = async () => {
   try {
-    const users = await getInputData();
+    let users = await getInputData();
+    const D = 7;
+    users = getRangeTxnsForUsers(users, D);
     const output = [];
     const medianAge = getMedianAge(users);
-    const D = 7;
     const medianFreq = getMedianFreq(users, D);
     const mxTxnsPerDay = getMxTxnsPerDay(users, D);
+    let allTxns = 0;
+    let mean = parseFloat(0);
 
-    console.log(` medianAge: ${medianAge}\n medianFreq: ${medianFreq}`);
+    console.log(
+      ` medianAge: ${medianAge}\n medianFreq: ${medianFreq}\n mxTxPerday: ${mxTxnsPerDay}\n users: ${(Object.keys(users)).length}`
+    );
 
     const userAddr = Object.keys(users);
     userAddr.forEach((fromAddr) => {
-      const stickyObj = stickyS(users[fromAddr], medianAge, medianFreq, D, mxTxnsPerDay);
+      const stickyObj = stickyS(
+        users[fromAddr],
+        medianAge,
+        medianFreq,
+        D,
+        mxTxnsPerDay
+      );
 
+      allTxns += users[fromAddr].length;
       output.push({
         user: fromAddr,
         result: stickyObj,
       });
     });
 
+    console.log(`allTxns: ${allTxns}`);
     await writeOutput(output);
     console.log("Sticky scores calculated successfully.");
   } catch (err) {
